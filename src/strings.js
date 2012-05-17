@@ -115,4 +115,5 @@ define(function (require, exports, module) {
                                                 + "Do you want to keep your changes?";
     
     exports.OPEN_FILE                         = "Open File";
+    exports.ABOUT_TITLE                       = "About";
 });

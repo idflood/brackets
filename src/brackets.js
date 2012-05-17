@@ -35,6 +35,7 @@
  * Unlike other modules, this one can be accessed without an explicit require() because it exposes
  * a global object, window.brackets.
  */
+require.config({paths: {text: "thirdparty/text"}});
 define(function (require, exports, module) {
     'use strict';
     
@@ -175,7 +176,8 @@ define(function (require, exports, module) {
                 }
                 $("#about-build-number").text(versionLabel);
                 
-                Dialogs.showModalDialog(Dialogs.DIALOG_ID_ABOUT);
+                var aboutContent = require("text!templates/about.html")
+                Dialogs.showModalDialog(Dialogs.DIALOG_ID_ABOUT, Strings.ABOUT_TITLE, aboutContent);
             });
         }
 

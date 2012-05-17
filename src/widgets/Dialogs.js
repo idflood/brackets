@@ -47,6 +47,48 @@ define(function (require, exports, module) {
         DIALOG_ID_LIVE_DEVELOPMENT = "live-development-error-dialog",
         DIALOG_ID_ABOUT = "about-dialog";
 
+    function _getDefaultButtons(dlgClass) {
+      switch (dlgClass) {
+        case DIALOG_ID_ERROR:
+          return {
+            ok: {text: "ok", class: "primary"}
+          };
+        
+        case DIALOG_ID_SAVE_CLOSE:
+          return {
+            dontsave: {text: "Don't Save", class: "left"},
+            ok: {text: "Save", class: "primary"},
+            cancel: {text: "Cancel"}
+          };
+        
+        case DIALOG_ID_EXT_CHANGED:
+          return {
+            dontsave: {text: "Reload from Disk", class: "left"},
+            cancel: {text: "Keep Changes in Editor", class: "primary"}
+          };
+        
+        case DIALOG_ID_EXT_DELETED:
+          return {
+            dontsave: {text: "Close (Don't Save)", class: "left"},
+            cancel: {text: "Keep Changes in Editor", class: "primary"}
+          };
+        
+        case DIALOG_ID_LIVE_DEVELOPMENT:
+          return {
+            cancel: {text: "Cancel", class: "left"},
+            ok: {text: "Relaunch Chrome", class: "primary"}
+          };
+        
+        case DIALOG_ID_ABOUT:
+          return {
+            ok: {text: "Close", class: "primary"}
+          };
+        
+        default:
+          return false;
+      }
+    }
+    
     function _dismissDialog(dlg, buttonId) {
         dlg.data("buttonId", buttonId);
         dlg.modal(true).hide();
@@ -101,6 +143,18 @@ define(function (require, exports, module) {
         }
     };
     
+    function _createModalButtons($dlg, buttons) {
+      for (var key in buttons) {
+        var btn = buttons[key];
+        var $bt = $('<a href="#" class="dialog-button btn" data-button-id="' + key + '">' + btn.text + '</a>');
+        // Add optionnal class if needed ("primary", "left", ...)
+        if (btn.class) {
+          $bt.addClass(btn.class);
+        }
+        $bt.appendTo($(".modal-footer", $dlg));
+      }
+    }
+    
     /**
      * General purpose modal dialog. Assumes that:
      * -- the root tag of the dialog is marked with a unique class name (passed as dlgClass), as well as the
@@ -116,29 +170,37 @@ define(function (require, exports, module) {
      * @return {$.Promise} a promise that will be resolved with the ID of the clicked button when the dialog
      *     is dismissed. Never rejected.
      */
-    function showModalDialog(dlgClass, title, message) {
+    function showModalDialog(dlgClass, title, message, buttons) {
         var result = $.Deferred();
         
         // We clone the HTML rather than using it directly so that if two dialogs of the same
         // type happen to show up, they can appear at the same time. (This is an edge case that
         // shouldn't happen often, but we can't prevent it from happening since everything is
         // asynchronous.)
-        var $dlg = $("." + dlgClass + ".template")
+        var $dlg = $(".generic-dialog.template")
             .clone()
             .removeClass("template")
             .addClass("instance")
+            .addClass(dlgClass)
             .appendTo(window.document.body);
         
         if ($dlg.length === 0) {
             throw new Error("Dialog id " + dlgClass + " does not exist");
         }
+        // If buttons are not defined try to get defaults by dialog class
+        if (!buttons) {
+          buttons = _getDefaultButtons(dlgClass);
+        }
 
-        // Set title and message
+        // Set title, message and buttons
         if (title) {
             $(".dialog-title", $dlg).html(title);
         }
         if (message) {
             $(".dialog-message", $dlg).html(message);
+        }
+        if (buttons) {
+            _createModalButtons($dlg, buttons);
         }
 
         var handleKeyDown = _handleKeyDown.bind($dlg);
